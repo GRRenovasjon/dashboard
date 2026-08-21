@@ -1,0 +1,192 @@
+﻿<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>GR Renovasjon – Dagsregistrering</title>
+<style>
+:root{--blue:#1e3a5f;--bg:#f1f5f9;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--green:#16a34a;--red:#dc2626}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+#auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.auth-card{background:var(--card);border-radius:16px;padding:32px 24px;width:100%;max-width:360px;box-shadow:0 4px 24px rgba(0,0,0,.1);text-align:center}
+.auth-logo{font-size:2.5rem;margin-bottom:12px}
+.auth-title{font-size:1.2rem;font-weight:700;color:var(--blue);margin-bottom:4px}
+.auth-sub{font-size:.85rem;color:var(--muted);margin-bottom:24px}
+.auth-card input[type=password]{width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:1rem;margin-bottom:12px;outline:none;font-family:inherit}
+.auth-card input:focus{border-color:var(--blue)}
+.btn-primary{width:100%;background:var(--blue);color:white;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer}
+.auth-error{color:var(--red);font-size:.85rem;margin-top:8px;min-height:20px}
+#app{display:none;max-width:540px;margin:0 auto;padding-bottom:40px}
+header{background:var(--blue);color:white;padding:16px 20px;position:sticky;top:0;z-index:10}
+header h1{font-size:1.1rem;font-weight:700}
+header p{font-size:.78rem;opacity:.75;margin-top:2px}
+.form-body{padding:16px;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--card);border-radius:12px;padding:16px;border:.5px solid var(--border)}
+.card-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:12px}
+label{display:block;font-size:.85rem;font-weight:600;color:var(--text);margin-bottom:5px}
+select,input[type=number],textarea{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:.95rem;font-family:inherit;color:var(--text);background:white;outline:none}
+select:focus,input:focus,textarea:focus{border-color:var(--blue)}
+textarea{resize:none}
+.field{margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.bil-card{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px}
+.bil-card:last-child{margin-bottom:0}
+.bil-header{font-size:.88rem;font-weight:700;color:var(--blue);margin-bottom:10px}
+.bil-header span{font-weight:400;color:var(--muted);font-size:.8rem;margin-left:6px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.meta-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn-save{background:var(--green);color:white;border:none;padding:15px;border-radius:12px;font-size:1.05rem;font-weight:700;cursor:pointer;width:100%}
+.btn-save:disabled{background:#94a3b8;cursor:not-allowed}
+.success-banner{background:#dcfce7;border:1px solid #86efac;border-radius:10px;padding:14px 16px;color:#15803d;font-weight:600;font-size:.9rem;display:none}
+.error-banner{background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:14px 16px;color:#991b1b;font-size:.85rem;display:none}
+</style>
+</head>
+<body>
+<div id="auth">
+  <div class="auth-card">
+    <div class="auth-logo">🚛</div>
+    <div class="auth-title">GR Renovasjon</div>
+    <div class="auth-sub">Dagsregistrering</div>
+    <input type="password" id="pwd" placeholder="Passord" autocomplete="current-password" onkeydown="if(event.key==='Enter')checkPwd()">
+    <button class="btn-primary" onclick="checkPwd()">Logg inn</button>
+    <div class="auth-error" id="auth-err"></div>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <h1>GR Renovasjon – Dagsregistrering</h1>
+    <p>Fyll inn dagens tall for din avdeling</p>
+  </header>
+  <div class="form-body">
+    <div class="success-banner" id="success">✓ Dataene er lagret!</div>
+    <div class="error-banner" id="error-banner"></div>
+
+    <div class="card">
+      <div class="card-title">Avdeling og dato</div>
+      <div class="field">
+        <label for="avdeling">Avdeling</label>
+        <select id="avdeling" onchange="renderBiler()">
+          <option value="">Velg avdeling…</option>
+          <option value="Nes">Nes</option>
+          <option value="Rakkestad">Rakkestad</option>
+          <option value="ORAS">ORAS</option>
+        </select>
+      </div>
+      <div class="meta-row">
+        <div class="field"><label for="uke">Uke</label><input type="number" id="uke" min="1" max="53"></div>
+        <div class="field">
+          <label for="dag">Dag</label>
+          <select id="dag">
+            <option>Mandag</option><option>Tirsdag</option><option>Onsdag</option><option>Torsdag</option><option>Fredag</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="biler-card" style="display:none">
+      <div class="card-title">Timer og avvik per bil</div>
+      <div id="biler-container"></div>
+    </div>
+
+    <div class="card" id="extra-card" style="display:none">
+      <div class="card-title">Sykefravær og kommentar</div>
+      <div class="field"><label for="syk">Antall syke i dag (hele avdelingen)</label><input type="number" id="syk" min="0" value="0"></div>
+      <div class="field"><label for="kommentar">Kommentar (valgfri)</label><textarea id="kommentar" rows="2" placeholder="Avvik, hendelser, forsinkelser…"></textarea></div>
+    </div>
+
+    <button class="btn-save" id="save-btn" onclick="saveData()" disabled>Lagre</button>
+  </div>
+</div>
+
+<script>
+const PASS='grr2026';
+const TOKEN=['github_pat_11CME6B3Q0','aSJTSb3kc0cH_LxmLvcvxY2oW','ZSAHe7jFINBWqKebtv0mvm6OANu92wcDO2O7YQ7mqjZKxhr'].join('');
+const OWNER='GRRenovasjon';const REPO='dashboard';const PATH='data/entries.json';
+const CFG={
+  Nes:{kontrakt:'Nes Kommune',totaltAnsatte:10,biler:[
+    {bil:'Bil 1',fraksjon:'Rest/mat',planlagtTimer:15},{bil:'Bil 2',fraksjon:'Rest/mat',planlagtTimer:15},
+    {bil:'Bil 3',fraksjon:'Papir',planlagtTimer:15},{bil:'Bil 4',fraksjon:'Glass+',planlagtTimer:7.5},{bil:'Bil 5',fraksjon:'Kran',planlagtTimer:7.5}]},
+  Rakkestad:{kontrakt:'Rakkestad Kommune',totaltAnsatte:6,biler:[
+    {bil:'Bil 1',fraksjon:'Rest/mat',planlagtTimer:15},{bil:'Bil 2',fraksjon:'Rest/mat',planlagtTimer:15},{bil:'Bil 3',fraksjon:'Papir',planlagtTimer:15}]},
+  ORAS:{kontrakt:'ORAS IKS',totaltAnsatte:8,biler:[
+    {bil:'Bil 1',fraksjon:'Rest/mat',planlagtTimer:15},{bil:'Bil 2',fraksjon:'Rest/mat',planlagtTimer:15},
+    {bil:'Bil 3',fraksjon:'Papir',planlagtTimer:15},{bil:'Bil 4',fraksjon:'Glass+',planlagtTimer:7.5}]}
+};
+function isoWeek(d){const t=new Date(d);t.setHours(0,0,0,0);t.setDate(t.getDate()+3-(t.getDay()+6)%7);const w=new Date(t.getFullYear(),0,4);return 1+Math.round(((t-w)/86400000-3+(w.getDay()+6)%7)/7)}
+function dayNO(d){return['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'][d.getDay()]}
+function checkPwd(){
+  if(document.getElementById('pwd').value===PASS){sessionStorage.setItem('grr-form',PASS);showApp();}
+  else document.getElementById('auth-err').textContent='Feil passord';
+}
+function showApp(){
+  document.getElementById('auth').style.display='none';
+  document.getElementById('app').style.display='';
+  const now=new Date();
+  document.getElementById('uke').value=isoWeek(now);
+  const d=dayNO(now);
+  const s=document.getElementById('dag');
+  for(const o of s.options)if(o.value===d){s.value=d;break;}
+  const av=localStorage.getItem('grr-avdeling');
+  if(av){document.getElementById('avdeling').value=av;renderBiler();}
+}
+function renderBiler(){
+  const avd=document.getElementById('avdeling').value;
+  if(!avd){document.getElementById('biler-card').style.display='none';document.getElementById('extra-card').style.display='none';document.getElementById('save-btn').disabled=true;return;}
+  localStorage.setItem('grr-avdeling',avd);
+  const cfg=CFG[avd];
+  let html='';
+  cfg.biler.forEach((b,i)=>{
+    html+=`<div class="bil-card"><div class="bil-header">${b.bil}<span>– ${b.fraksjon} (plan: ${b.planlagtTimer}t)</span></div>
+    <div class="row2"><div><label>Timer kjørt</label><input type="number" id="timer-${i}" min="0" max="24" step="0.5" placeholder="${b.planlagtTimer}"></div>
+    <div><label>Glemte tømminger</label><input type="number" id="avvik-${i}" min="0" value="0"></div></div></div>`;
+  });
+  document.getElementById('biler-container').innerHTML=html;
+  document.getElementById('biler-card').style.display='';
+  document.getElementById('extra-card').style.display='';
+  document.getElementById('save-btn').disabled=false;
+}
+async function saveData(){
+  const avd=document.getElementById('avdeling').value;
+  const uke=parseInt(document.getElementById('uke').value);
+  const dag=document.getElementById('dag').value;
+  const syk=parseInt(document.getElementById('syk').value)||0;
+  const kommentar=document.getElementById('kommentar').value.trim();
+  if(!avd)return;
+  const cfg=CFG[avd];
+  const rows=[];
+  cfg.biler.forEach((b,i)=>{
+    const timer=parseFloat(document.getElementById('timer-'+i).value)||0;
+    const avvik=parseInt(document.getElementById('avvik-'+i).value)||0;
+    if(timer===0&&avvik===0)return;
+    rows.push({Uke:uke,Dag:dag,Avdeling:avd,Kontrakt:cfg.kontrakt,Bil:b.bil,Fraksjon:b.fraksjon,
+      AntallTimer:timer,PlanlagtTimer:b.planlagtTimer,AntallAvvik:avvik,
+      SykTotal:i===0?syk:0,TotaltAnsatte:i===0?cfg.totaltAnsatte:0,Kommentar:kommentar});
+  });
+  if(rows.length===0){showErr('Fyll inn timer for minst én bil.');return;}
+  const btn=document.getElementById('save-btn');
+  btn.textContent='Lagrer…';btn.disabled=true;hideMsg();
+  try{
+    const r=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`,
+      {headers:{Authorization:`Bearer ${TOKEN}`,Accept:'application/vnd.github+json'}});
+    const f=await r.json();
+    let cur=[];try{cur=JSON.parse(atob(f.content.replace(/\n/g,'')));}catch(e){}
+    const updated=[...cur,...rows];
+    const put=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`,
+      {method:'PUT',headers:{Authorization:`Bearer ${TOKEN}`,'Content-Type':'application/json',Accept:'application/vnd.github+json'},
+       body:JSON.stringify({message:`Registrering uke ${uke} ${dag} - ${avd}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(updated)))),sha:f.sha})});
+    if(!put.ok)throw new Error('HTTP '+put.status);
+    document.getElementById('success').style.display='';
+    document.getElementById('kommentar').value='';
+    document.getElementById('syk').value='0';
+    cfg.biler.forEach((_,i)=>{document.getElementById('timer-'+i).value='';document.getElementById('avvik-'+i).value='0';});
+  }catch(e){showErr('Kunne ikke lagre: '+e.message);}
+  btn.textContent='Lagre';btn.disabled=false;
+}
+function showErr(m){const e=document.getElementById('error-banner');e.textContent=m;e.style.display='';}
+function hideMsg(){document.getElementById('success').style.display='none';document.getElementById('error-banner').style.display='none';}
+if(sessionStorage.getItem('grr-form')===PASS)showApp();
+</script>
+</body>
+</html>
