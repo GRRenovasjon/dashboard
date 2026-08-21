@@ -1,0 +1,345 @@
+﻿<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GR Renovasjon – KPI Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--blue:#1e3a5f;--blue2:#2d5a8e;--bg:#f1f5f9;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--green:#16a34a;--yellow:#d97706;--red:#dc2626;--green-bg:#dcfce7;--yellow-bg:#fef3c7;--red-bg:#fef2f2}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+#auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.auth-card{background:var(--card);border-radius:16px;padding:32px 24px;width:100%;max-width:360px;box-shadow:0 4px 24px rgba(0,0,0,.1);text-align:center}
+.auth-logo{font-size:2.5rem;margin-bottom:12px}
+.auth-title{font-size:1.2rem;font-weight:700;color:var(--blue);margin-bottom:4px}
+.auth-sub{font-size:.85rem;color:var(--muted);margin-bottom:24px}
+.auth-card input[type=password]{width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:1rem;margin-bottom:12px;outline:none;font-family:inherit}
+.auth-card input:focus{border-color:var(--blue)}
+.btn-primary{width:100%;background:var(--blue);color:white;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer}
+.auth-error{color:var(--red);font-size:.85rem;margin-top:8px;min-height:20px}
+#app{display:none}
+header{background:var(--blue);color:white;padding:14px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+header h1{font-size:1.1rem;font-weight:700;flex:1;min-width:140px}
+.hdr-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.toggle-btn{background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);padding:6px 12px;border-radius:7px;font-size:.82rem;cursor:pointer;font-family:inherit}
+.toggle-btn.active{background:white;color:var(--blue);font-weight:600}
+select.hdr-sel{background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);padding:6px 10px;border-radius:7px;font-size:.82rem;cursor:pointer;font-family:inherit;outline:none}
+select.hdr-sel option{color:var(--text);background:white}
+.btn-refresh{background:rgba(255,255,255,.2);color:white;border:1px solid rgba(255,255,255,.3);padding:6px 12px;border-radius:7px;font-size:.82rem;cursor:pointer;font-family:inherit}
+.status-bar{padding:8px 20px;font-size:.78rem;color:var(--muted);background:#f8fafc;border-bottom:.5px solid var(--border)}
+main{padding:20px;display:flex;flex-direction:column;gap:20px;max-width:1200px;margin:0 auto}
+.section-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:12px}
+.avd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.avd-card{background:var(--card);border-radius:14px;padding:18px;border:.5px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.avd-title{font-size:.95rem;font-weight:700;color:var(--blue);margin-bottom:4px}
+.avd-sub{font-size:.75rem;color:var(--muted);margin-bottom:14px}
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kpi{background:#f8fafc;border-radius:10px;padding:12px;cursor:pointer;transition:box-shadow .15s}
+.kpi:hover{box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.kpi-label{font-size:.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.kpi-val{font-size:1.3rem;font-weight:800;line-height:1}
+.kpi-unit{font-size:.7rem;color:var(--muted);margin-top:2px}
+.kpi-trend{font-size:.72rem;margin-top:4px}
+.kpi.ok{border-left:3px solid var(--green)}.kpi.warn{border-left:3px solid var(--yellow)}.kpi.bad{border-left:3px solid var(--red)}
+.charts-wrap{background:var(--card);border-radius:14px;padding:20px;border:.5px solid var(--border)}
+.chart-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.chart-tab{background:#f1f5f9;border:none;padding:6px 14px;border-radius:6px;font-size:.82rem;cursor:pointer;font-family:inherit;color:var(--text)}
+.chart-tab.active{background:var(--blue);color:white;font-weight:600}
+canvas{max-height:260px}
+/* modal */
+#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center;padding:20px}
+#modal.open{display:flex}
+.modal-box{background:var(--card);border-radius:16px;padding:24px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto}
+.modal-box h2{font-size:1.05rem;color:var(--blue);margin-bottom:16px}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{text-align:left;padding:7px 8px;background:#f8fafc;color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:7px 8px;border-bottom:.5px solid var(--border)}
+.modal-close{float:right;background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted)}
+/* comments */
+#comments-panel{display:none;background:var(--card);border-radius:14px;padding:20px;border:.5px solid var(--border)}
+.comment-row{padding:10px 0;border-bottom:.5px solid var(--border);font-size:.85rem}
+.comment-row:last-child{border-bottom:none}
+.comment-meta{font-size:.75rem;color:var(--muted);margin-bottom:3px}
+@media(max-width:600px){
+  header{padding:12px 14px}.hdr-controls{gap:6px}
+  main{padding:12px;gap:14px}.avd-grid{grid-template-columns:1fr}
+  .kpi-val{font-size:1.1rem}.kpi{padding:10px}
+}
+</style>
+</head>
+<body>
+<div id="auth">
+  <div class="auth-card">
+    <div class="auth-logo">📊</div>
+    <div class="auth-title">GR Renovasjon</div>
+    <div class="auth-sub">KPI Dashboard</div>
+    <input type="password" id="pwd" placeholder="Passord" autocomplete="current-password" onkeydown="if(event.key==='Enter')checkPwd()">
+    <button class="btn-primary" onclick="checkPwd()">Logg inn</button>
+    <div class="auth-error" id="auth-err"></div>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <h1>GR Renovasjon – KPI</h1>
+    <div class="hdr-controls">
+      <button class="toggle-btn active" id="btn-uke" onclick="setView('uke')">Uke</button>
+      <button class="toggle-btn" id="btn-dag" onclick="setView('dag')">Dag</button>
+      <select class="hdr-sel" id="sel-period" onchange="render()"></select>
+      <button class="btn-refresh" onclick="loadData(true)">↻ Oppdater</button>
+      <button class="btn-refresh" onclick="toggleComments()">💬 Kommentarer</button>
+    </div>
+  </header>
+  <div class="status-bar" id="status-bar">Laster data…</div>
+  <main>
+    <div>
+      <div class="section-title">Nøkkeltall per avdeling</div>
+      <div class="avd-grid" id="avd-grid"></div>
+    </div>
+    <div class="charts-wrap">
+      <div class="section-title">Trender</div>
+      <div class="chart-tabs">
+        <button class="chart-tab active" onclick="showChart('avvik')">Glemte tømminger</button>
+        <button class="chart-tab" onclick="showChart('overtid')">Overtidsgrad</button>
+        <button class="chart-tab" onclick="showChart('syk')">Sykefravær</button>
+      </div>
+      <canvas id="trendChart"></canvas>
+    </div>
+    <div id="comments-panel">
+      <div class="section-title">Kommentarer</div>
+      <div id="comments-list"></div>
+    </div>
+  </main>
+</div>
+
+<div id="modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2 id="modal-title"></h2>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const PASS='grreno26';
+const TOKEN=['github_pat_11CME6B3Q0','aSJTSb3kc0cH_LxmLvcvxY2oW','ZSAHe7jFINBWqKebtv0mvm6OANu92wcDO2O7YQ7mqjZKxhr'].join('');
+const OWNER='GRRenovasjon';const REPO='dashboard';const PATH='data/entries.json';
+
+const CFG={
+  Nes:{kontrakt:'Nes Kommune',totaltAnsatte:10,biler:[
+    {bil:'Bil 1',fraksjon:'Rest/mat',planlagtTimer:15},{bil:'Bil 2',fraksjon:'Rest/mat',planlagtTimer:15},
+    {bil:'Bil 3',fraksjon:'Papir',planlagtTimer:15},{bil:'Bil 4',fraksjon:'Glass+',planlagtTimer:7.5},{bil:'Bil 5',fraksjon:'Kran',planlagtTimer:7.5}]},
+  Rakkestad:{kontrakt:'Rakkestad Kommune',totaltAnsatte:6,biler:[
+    {bil:'Bil 1',fraksjon:'Rest/mat',planlagtTimer:15},{bil:'Bil 2',fraksjon:'Rest/mat',planlagtTimer:15},{bil:'Bil 3',fraksjon:'Papir',planlagtTimer:15}]},
+  ORAS:{kontrakt:'ORAS IKS',totaltAnsatte:8,biler:[
+    {bil:'Bil 1',fraksjon:'Rest/mat',planlagtTimer:15},{bil:'Bil 2',fraksjon:'Rest/mat',planlagtTimer:15},
+    {bil:'Bil 3',fraksjon:'Papir',planlagtTimer:15},{bil:'Bil 4',fraksjon:'Glass+',planlagtTimer:7.5}]}
+};
+
+let allData=[], viewMode='uke', currentChart='avvik', chartInst=null;
+
+const DAGORDER=['Mandag','Tirsdag','Onsdag','Torsdag','Fredag'];
+
+function checkPwd(){
+  if(document.getElementById('pwd').value===PASS){sessionStorage.setItem('grr-dash',PASS);init();}
+  else document.getElementById('auth-err').textContent='Feil passord';
+}
+
+async function init(){
+  document.getElementById('auth').style.display='none';
+  document.getElementById('app').style.display='';
+  await loadData(false);
+}
+
+async function loadData(force){
+  document.getElementById('status-bar').textContent='Henter data fra GitHub…';
+  try{
+    const url=`https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`;
+    const r=await fetch(url+(force?'?t='+Date.now():''),{headers:{Authorization:`Bearer ${TOKEN}`,Accept:'application/vnd.github+json'}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const f=await r.json();
+    allData=JSON.parse(atob(f.content.replace(/\n/g,'')));
+    document.getElementById('status-bar').textContent=`${allData.length} rader lastet – ${new Date().toLocaleTimeString('no-NO')}`;
+    buildPeriodSelector();
+    render();
+  }catch(e){document.getElementById('status-bar').textContent='Feil ved datahenting: '+e.message;}
+}
+
+function buildPeriodSelector(){
+  const sel=document.getElementById('sel-period');
+  const cur=sel.value;
+  if(viewMode==='uke'){
+    const uker=[...new Set(allData.map(r=>r.Uke))].sort((a,b)=>b-a);
+    sel.innerHTML=uker.map(u=>`<option value="${u}">Uke ${u}</option>`).join('');
+    if(cur&&uker.includes(+cur))sel.value=cur; else if(uker.length)sel.value=uker[0];
+  } else {
+    const uker=[...new Set(allData.map(r=>r.Uke))].sort((a,b)=>b-a);
+    const opts=[];
+    uker.forEach(u=>{
+      const dager=[...new Set(allData.filter(r=>r.Uke===u).map(r=>r.Dag))].sort((a,b)=>DAGORDER.indexOf(a)-DAGORDER.indexOf(b));
+      dager.forEach(d=>opts.push({val:`${u}|${d}`,lbl:`Uke ${u} – ${d}`}));
+    });
+    sel.innerHTML=opts.map(o=>`<option value="${o.val}">${o.lbl}</option>`).join('');
+    if(cur&&opts.find(o=>o.val===cur))sel.value=cur; else if(opts.length)sel.value=opts[0].val;
+  }
+}
+
+function setView(v){
+  viewMode=v;
+  document.getElementById('btn-uke').classList.toggle('active',v==='uke');
+  document.getElementById('btn-dag').classList.toggle('active',v==='dag');
+  buildPeriodSelector();render();
+}
+
+function getFilteredData(){
+  const sel=document.getElementById('sel-period').value;
+  if(!sel)return[];
+  if(viewMode==='uke')return allData.filter(r=>r.Uke===+sel);
+  const[u,d]=sel.split('|');
+  return allData.filter(r=>r.Uke===+u&&r.Dag===d);
+}
+
+function calcKPI(rows, avdeling){
+  const r=rows.filter(x=>x.Avdeling===avdeling);
+  const cfg=CFG[avdeling];
+  const avvik=r.reduce((s,x)=>s+x.AntallAvvik,0);
+  const overtid=r.reduce((s,x)=>s+Math.max(0,x.AntallTimer-x.PlanlagtTimer),0);
+  const planTotal=r.reduce((s,x)=>s+x.PlanlagtTimer,0);
+  const overtidPct=planTotal>0?+(overtid/planTotal*100).toFixed(1):0;
+  const dager=viewMode==='dag'?1:[...new Set(r.map(x=>x.Dag))].length||1;
+  const sykSummer=r.filter(x=>x.TotaltAnsatte>0).reduce((s,x)=>s+x.SykTotal,0);
+  const sykBasis=cfg.totaltAnsatte*dager;
+  const sykPct=sykBasis>0?+(sykSummer/sykBasis*100).toFixed(1):0;
+  return{avvik,overtidPct,sykPct,rows:r};
+}
+
+function statusClass(val,warn,bad){return val>=bad?'bad':val>=warn?'warn':'ok';}
+function trend(cur,prev){if(prev==null)return'';const d=cur-prev;if(Math.abs(d)<0.1)return' →';return d>0?' ▲':' ▼';}
+
+function render(){
+  const rows=getFilteredData();
+  const grid=document.getElementById('avd-grid');
+  grid.innerHTML='';
+  ['Nes','Rakkestad','ORAS'].forEach(avd=>{
+    const k=calcKPI(rows,avd);
+    const prevRows=getPrevPeriodData(avd);
+    const pk=prevRows?calcKPI(prevRows,avd):null;
+    const div=document.createElement('div');div.className='avd-card';
+    div.innerHTML=`<div class="avd-title">${avd}</div><div class="avd-sub">${CFG[avd].kontrakt}</div>
+    <div class="kpi-row">
+      <div class="kpi ${statusClass(k.avvik,5,10)}" onclick="drill('${avd}','avvik')">
+        <div class="kpi-label">Glemte</div><div class="kpi-val">${k.avvik}</div>
+        <div class="kpi-unit">tømminger</div><div class="kpi-trend">${trend(k.avvik,pk?.avvik)}</div>
+      </div>
+      <div class="kpi ${statusClass(k.overtidPct,5,10)}" onclick="drill('${avd}','overtid')">
+        <div class="kpi-label">Overtid</div><div class="kpi-val">${k.overtidPct}</div>
+        <div class="kpi-unit">%</div><div class="kpi-trend">${trend(k.overtidPct,pk?.overtidPct)}</div>
+      </div>
+      <div class="kpi ${statusClass(k.sykPct,5,10)}" onclick="drill('${avd}','syk')">
+        <div class="kpi-label">Sykefravær</div><div class="kpi-val">${k.sykPct}</div>
+        <div class="kpi-unit">%</div><div class="kpi-trend">${trend(k.sykPct,pk?.sykPct)}</div>
+      </div>
+    </div>`;
+    grid.appendChild(div);
+  });
+  renderChart(currentChart);
+  renderComments(rows);
+}
+
+function getPrevPeriodData(avd){
+  const sel=document.getElementById('sel-period').value;
+  if(!sel)return null;
+  if(viewMode==='uke'){
+    const u=+sel;
+    const prev=Math.max(...allData.filter(r=>r.Avdeling===avd&&r.Uke<u).map(r=>r.Uke)||[]);
+    if(!isFinite(prev))return null;
+    return allData.filter(r=>r.Avdeling===avd&&r.Uke===prev);
+  }
+  const[u,d]=sel.split('|');
+  const idx=DAGORDER.indexOf(d);
+  if(idx<=0)return null;
+  const prevD=DAGORDER[idx-1];
+  return allData.filter(r=>r.Avdeling===avd&&r.Uke===+u&&r.Dag===prevD);
+}
+
+function renderChart(type){
+  currentChart=type;
+  document.querySelectorAll('.chart-tab').forEach((t,i)=>t.classList.toggle('active',['avvik','overtid','syk'][i]===type));
+  const uker=[...new Set(allData.map(r=>r.Uke))].sort((a,b)=>a-b).slice(-8);
+  const labels=uker.map(u=>'Uke '+u);
+  const datasets=['Nes','Rakkestad','ORAS'].map((avd,i)=>{
+    const colors=['#1e3a5f','#16a34a','#d97706'];
+    const data=uker.map(u=>{
+      const r=allData.filter(x=>x.Avdeling===avd&&x.Uke===u);
+      if(!r.length)return null;
+      if(type==='avvik')return r.reduce((s,x)=>s+x.AntallAvvik,0);
+      if(type==='overtid'){
+        const ot=r.reduce((s,x)=>s+Math.max(0,x.AntallTimer-x.PlanlagtTimer),0);
+        const pl=r.reduce((s,x)=>s+x.PlanlagtTimer,0);
+        return pl>0?+(ot/pl*100).toFixed(1):0;
+      }
+      const syk=r.filter(x=>x.TotaltAnsatte>0).reduce((s,x)=>s+x.SykTotal,0);
+      const dager=[...new Set(r.map(x=>x.Dag))].length||1;
+      return+(syk/(CFG[avd].totaltAnsatte*dager)*100).toFixed(1);
+    });
+    return{label:avd,data,borderColor:colors[i],backgroundColor:colors[i]+'22',tension:.3,fill:true,spanGaps:true,pointRadius:4};
+  });
+  const ctx=document.getElementById('trendChart').getContext('2d');
+  if(chartInst)chartInst.destroy();
+  chartInst=new Chart(ctx,{type:'line',data:{labels,datasets},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true}}}});
+}
+
+function showChart(t){renderChart(t);}
+
+function drill(avd,kpiType){
+  const rows=getFilteredData().filter(r=>r.Avdeling===avd);
+  const titles={avvik:'Glemte tømminger',overtid:'Overtidsgrad per bil',syk:'Sykefravær'};
+  document.getElementById('modal-title').textContent=`${avd} – ${titles[kpiType]}`;
+  let html='';
+  if(kpiType==='avvik'){
+    html='<table><thead><tr><th>Dag</th><th>Bil</th><th>Fraksjon</th><th>Avvik</th></tr></thead><tbody>';
+    rows.filter(r=>r.AntallAvvik>0).forEach(r=>{html+=`<tr><td>${r.Dag}</td><td>${r.Bil}</td><td>${r.Fraksjon}</td><td>${r.AntallAvvik}</td></tr>`;});
+    html+='</tbody></table>';
+    if(!rows.filter(r=>r.AntallAvvik>0).length)html='<p style="color:var(--muted);padding:12px">Ingen glemte tømminger i valgt periode.</p>';
+  } else if(kpiType==='overtid'){
+    html='<table><thead><tr><th>Dag</th><th>Bil</th><th>Faktisk</th><th>Plan</th><th>Overtid</th></tr></thead><tbody>';
+    rows.forEach(r=>{const ot=Math.max(0,r.AntallTimer-r.PlanlagtTimer);if(ot>0)html+=`<tr><td>${r.Dag}</td><td>${r.Bil}</td><td>${r.AntallTimer}t</td><td>${r.PlanlagtTimer}t</td><td style="color:var(--red)">+${ot}t</td></tr>`;});
+    html+='</tbody></table>';
+    if(!rows.filter(r=>Math.max(0,r.AntallTimer-r.PlanlagtTimer)>0).length)html='<p style="color:var(--muted);padding:12px">Ingen overtid i valgt periode.</p>';
+  } else {
+    html='<table><thead><tr><th>Dag</th><th>Syke</th><th>Ansatte</th><th>%</th></tr></thead><tbody>';
+    const dager=DAGORDER.filter(d=>rows.some(r=>r.Dag===d));
+    dager.forEach(d=>{
+      const dr=rows.filter(r=>r.Dag===d);
+      const syk=dr.filter(r=>r.TotaltAnsatte>0).reduce((s,r)=>s+r.SykTotal,0);
+      const ans=CFG[avd].totaltAnsatte;
+      html+=`<tr><td>${d}</td><td>${syk}</td><td>${ans}</td><td>${+(syk/ans*100).toFixed(1)}%</td></tr>`;
+    });
+    html+='</tbody></table>';
+  }
+  document.getElementById('modal-body').innerHTML=html;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal();});
+
+function toggleComments(){
+  const p=document.getElementById('comments-panel');
+  p.style.display=p.style.display==='none'||!p.style.display?'block':'none';
+}
+
+function renderComments(rows){
+  const withComment=rows.filter(r=>r.Kommentar&&r.Kommentar.trim());
+  const list=document.getElementById('comments-list');
+  if(!withComment.length){list.innerHTML='<p style="color:var(--muted);font-size:.85rem">Ingen kommentarer i valgt periode.</p>';return;}
+  const seen=new Set();
+  list.innerHTML=withComment.filter(r=>{const k=`${r.Uke}|${r.Dag}|${r.Avdeling}|${r.Kommentar}`;if(seen.has(k))return false;seen.add(k);return true;})
+    .map(r=>`<div class="comment-row"><div class="comment-meta">Uke ${r.Uke} ${r.Dag} – ${r.Avdeling}</div>${r.Kommentar}</div>`).join('');
+}
+
+if(sessionStorage.getItem('grr-dash')===PASS)init();
+</script>
+</body>
+</html>
