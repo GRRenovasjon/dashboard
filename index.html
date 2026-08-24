@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="no">
 <head>
 <meta charset="UTF-8">
@@ -6,7 +6,7 @@
 <title>GR Renovasjon – KPI Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-:root{--blue:#1e3a5f;--blue2:#2d5a8e;--bg:#f1f5f9;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--green:#16a34a;--yellow:#d97706;--red:#dc2626;--green-bg:#dcfce7;--yellow-bg:#fef3c7;--red-bg:#fef2f2}
+:root{--blue:#1e3a5f;--blue2:#2d5a8e;--bg:#f1f5f9;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--green:#16a34a;--yellow:#d97706;--red:#dc2626}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 #auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -19,35 +19,36 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .btn-primary{width:100%;background:var(--blue);color:white;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer}
 .auth-error{color:var(--red);font-size:.85rem;margin-top:8px;min-height:20px}
 #app{display:none}
-header{background:var(--blue);color:white;padding:14px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
-header h1{font-size:1.1rem;font-weight:700;flex:1;min-width:140px}
-.hdr-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.toggle-btn{background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);padding:6px 12px;border-radius:7px;font-size:.82rem;cursor:pointer;font-family:inherit}
-.toggle-btn.active{background:white;color:var(--blue);font-weight:600}
-select.hdr-sel{background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);padding:6px 10px;border-radius:7px;font-size:.82rem;cursor:pointer;font-family:inherit;outline:none}
+header{background:var(--blue);color:white;padding:14px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+header h1{font-size:1.05rem;font-weight:700;flex:1;min-width:120px}
+.hdr-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.toggle-btn{background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);padding:6px 11px;border-radius:7px;font-size:.8rem;cursor:pointer;font-family:inherit}
+.toggle-btn.active{background:white;color:var(--blue);font-weight:700}
+select.hdr-sel{background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);padding:6px 10px;border-radius:7px;font-size:.8rem;cursor:pointer;font-family:inherit;outline:none;max-width:160px}
 select.hdr-sel option{color:var(--text);background:white}
-.btn-refresh{background:rgba(255,255,255,.2);color:white;border:1px solid rgba(255,255,255,.3);padding:6px 12px;border-radius:7px;font-size:.82rem;cursor:pointer;font-family:inherit}
-.status-bar{padding:8px 20px;font-size:.78rem;color:var(--muted);background:#f8fafc;border-bottom:.5px solid var(--border)}
+.btn-refresh{background:rgba(255,255,255,.2);color:white;border:1px solid rgba(255,255,255,.3);padding:6px 11px;border-radius:7px;font-size:.8rem;cursor:pointer;font-family:inherit}
+.status-bar{padding:7px 20px;font-size:.77rem;color:var(--muted);background:#f8fafc;border-bottom:.5px solid var(--border)}
 main{padding:20px;display:flex;flex-direction:column;gap:20px;max-width:1200px;margin:0 auto}
 .section-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:12px}
-.avd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.avd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
 .avd-card{background:var(--card);border-radius:14px;padding:18px;border:.5px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.04)}
 .avd-title{font-size:.95rem;font-weight:700;color:var(--blue);margin-bottom:4px}
 .avd-sub{font-size:.75rem;color:var(--muted);margin-bottom:14px}
 .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .kpi{background:#f8fafc;border-radius:10px;padding:12px;cursor:pointer;transition:box-shadow .15s}
 .kpi:hover{box-shadow:0 2px 8px rgba(0,0,0,.12)}
-.kpi-label{font-size:.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.kpi-label{font-size:.68rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
 .kpi-val{font-size:1.3rem;font-weight:800;line-height:1}
-.kpi-unit{font-size:.7rem;color:var(--muted);margin-top:2px}
+.kpi-unit{font-size:.68rem;color:var(--muted);margin-top:2px}
 .kpi-trend{font-size:.72rem;margin-top:4px}
 .kpi.ok{border-left:3px solid var(--green)}.kpi.warn{border-left:3px solid var(--yellow)}.kpi.bad{border-left:3px solid var(--red)}
 .charts-wrap{background:var(--card);border-radius:14px;padding:20px;border:.5px solid var(--border)}
-.chart-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-.chart-tab{background:#f1f5f9;border:none;padding:6px 14px;border-radius:6px;font-size:.82rem;cursor:pointer;font-family:inherit;color:var(--text)}
+.chart-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.chart-tabs{display:flex;gap:6px;flex:1;flex-wrap:wrap}
+.chart-tab{background:#f1f5f9;border:none;padding:6px 13px;border-radius:6px;font-size:.8rem;cursor:pointer;font-family:inherit;color:var(--text)}
 .chart-tab.active{background:var(--blue);color:white;font-weight:600}
-canvas{max-height:260px}
-/* modal */
+select.chart-period{padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:.8rem;font-family:inherit;outline:none;background:white;color:var(--text)}
+canvas{max-height:280px}
 #modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center;padding:20px}
 #modal.open{display:flex}
 .modal-box{background:var(--card);border-radius:16px;padding:24px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto}
@@ -56,15 +57,14 @@ table{width:100%;border-collapse:collapse;font-size:.82rem}
 th{text-align:left;padding:7px 8px;background:#f8fafc;color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;border-bottom:1px solid var(--border)}
 td{padding:7px 8px;border-bottom:.5px solid var(--border)}
 .modal-close{float:right;background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted)}
-/* comments */
 #comments-panel{display:none;background:var(--card);border-radius:14px;padding:20px;border:.5px solid var(--border)}
 .comment-row{padding:10px 0;border-bottom:.5px solid var(--border);font-size:.85rem}
 .comment-row:last-child{border-bottom:none}
 .comment-meta{font-size:.75rem;color:var(--muted);margin-bottom:3px}
 @media(max-width:600px){
-  header{padding:12px 14px}.hdr-controls{gap:6px}
-  main{padding:12px;gap:14px}.avd-grid{grid-template-columns:1fr}
-  .kpi-val{font-size:1.1rem}.kpi{padding:10px}
+  header{padding:11px 14px}main{padding:12px;gap:14px}.avd-grid{grid-template-columns:1fr}
+  .kpi-val{font-size:1.1rem}.kpi{padding:10px}.hdr-controls{gap:5px}
+  select.hdr-sel{max-width:120px}
 }
 </style>
 </head>
@@ -86,23 +86,32 @@ td{padding:7px 8px;border-bottom:.5px solid var(--border)}
     <div class="hdr-controls">
       <button class="toggle-btn active" id="btn-uke" onclick="setView('uke')">Uke</button>
       <button class="toggle-btn" id="btn-dag" onclick="setView('dag')">Dag</button>
+      <button class="toggle-btn" id="btn-periode" onclick="setView('periode')">Periode</button>
       <select class="hdr-sel" id="sel-period" onchange="render()"></select>
       <button class="btn-refresh" onclick="loadData(true)">↻ Oppdater</button>
-      <button class="btn-refresh" onclick="toggleComments()">💬 Kommentarer</button>
+      <button class="btn-refresh" onclick="toggleComments()">💬</button>
     </div>
   </header>
   <div class="status-bar" id="status-bar">Laster data…</div>
   <main>
     <div>
-      <div class="section-title">Nøkkeltall per avdeling</div>
+      <div class="section-title" id="kpi-title">Nøkkeltall per avdeling</div>
       <div class="avd-grid" id="avd-grid"></div>
     </div>
     <div class="charts-wrap">
-      <div class="section-title">Trender</div>
-      <div class="chart-tabs">
-        <button class="chart-tab active" onclick="showChart('avvik')">Glemte tømminger</button>
-        <button class="chart-tab" onclick="showChart('overtid')">Overtidsgrad</button>
-        <button class="chart-tab" onclick="showChart('syk')">Sykefravær</button>
+      <div class="chart-header">
+        <div class="chart-tabs">
+          <button class="chart-tab active" onclick="showChart('avvik')">Glemte tømminger</button>
+          <button class="chart-tab" onclick="showChart('overtid')">Overtidsgrad</button>
+          <button class="chart-tab" onclick="showChart('syk')">Sykefravær</button>
+        </div>
+        <select class="chart-period" id="chart-period" onchange="renderChart(currentChart)">
+          <option value="4">Siste 4 uker</option>
+          <option value="8" selected>Siste 8 uker</option>
+          <option value="12">Siste 12 uker</option>
+          <option value="ytd">Hittil i år</option>
+          <option value="all">Alt</option>
+        </select>
       </div>
       <canvas id="trendChart"></canvas>
     </div>
@@ -138,8 +147,35 @@ const CFG={
 };
 
 let allData=[], viewMode='uke', currentChart='avvik', chartInst=null;
-
 const DAGORDER=['Mandag','Tirsdag','Onsdag','Torsdag','Fredag'];
+
+// --- Periode helpers ---
+function currentYear(){ return new Date().getFullYear(); }
+
+function getChartUker(){
+  const val=document.getElementById('chart-period').value;
+  const alleUker=[...new Set(allData.map(r=>r.Uke))].sort((a,b)=>a-b);
+  if(val==='all') return alleUker;
+  if(val==='ytd'){
+    const thisYear=currentYear();
+    // Assume current year data; filter by week <= current ISO week
+    const now=new Date(); const cw=isoWeek(now);
+    return alleUker.filter(u=>u<=cw);
+  }
+  return alleUker.slice(-parseInt(val));
+}
+
+function getPeriodeUker(){
+  const val=document.getElementById('sel-period').value;
+  if(!val) return [];
+  const alleUker=[...new Set(allData.map(r=>r.Uke))].sort((a,b)=>a-b);
+  if(val==='all') return alleUker;
+  if(val==='ytd'){ const cw=isoWeek(new Date()); return alleUker.filter(u=>u<=cw); }
+  return alleUker.slice(-parseInt(val));
+}
+
+function isoWeek(d){const t=new Date(d);t.setHours(0,0,0,0);t.setDate(t.getDate()+3-(t.getDay()+6)%7);const w=new Date(t.getFullYear(),0,4);return 1+Math.round(((t-w)/86400000-3+(w.getDay()+6)%7)/7)}
+function dayNO(d){return['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'][d.getDay()]}
 
 function checkPwd(){
   if(document.getElementById('pwd').value===PASS){sessionStorage.setItem('grr-dash',PASS);init();}
@@ -157,7 +193,7 @@ async function loadData(force){
   try{
     const url=`https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`;
     const r=await fetch(url+(force?'?t='+Date.now():''),{headers:{Authorization:`Bearer ${TOKEN}`,Accept:'application/vnd.github+json'}});
-    if(!r.ok)throw new Error('HTTP '+r.status);
+    if(!r.ok) throw new Error('HTTP '+r.status);
     const f=await r.json();
     allData=JSON.parse(atob(f.content.replace(/\n/g,'')));
     document.getElementById('status-bar').textContent=`${allData.length} rader lastet – ${new Date().toLocaleTimeString('no-NO')}`;
@@ -172,8 +208,8 @@ function buildPeriodSelector(){
   if(viewMode==='uke'){
     const uker=[...new Set(allData.map(r=>r.Uke))].sort((a,b)=>b-a);
     sel.innerHTML=uker.map(u=>`<option value="${u}">Uke ${u}</option>`).join('');
-    if(cur&&uker.includes(+cur))sel.value=cur; else if(uker.length)sel.value=uker[0];
-  } else {
+    if(cur&&uker.includes(+cur)) sel.value=cur; else if(uker.length) sel.value=uker[0];
+  } else if(viewMode==='dag'){
     const uker=[...new Set(allData.map(r=>r.Uke))].sort((a,b)=>b-a);
     const opts=[];
     uker.forEach(u=>{
@@ -181,23 +217,33 @@ function buildPeriodSelector(){
       dager.forEach(d=>opts.push({val:`${u}|${d}`,lbl:`Uke ${u} – ${d}`}));
     });
     sel.innerHTML=opts.map(o=>`<option value="${o.val}">${o.lbl}</option>`).join('');
-    if(cur&&opts.find(o=>o.val===cur))sel.value=cur; else if(opts.length)sel.value=opts[0].val;
+    if(cur&&opts.find(o=>o.val===cur)) sel.value=cur; else if(opts.length) sel.value=opts[0].val;
+  } else {
+    sel.innerHTML=`
+      <option value="4">Siste 4 uker</option>
+      <option value="8" selected>Siste 8 uker</option>
+      <option value="12">Siste 12 uker</option>
+      <option value="ytd">Hittil i år</option>
+      <option value="all">Alt</option>`;
+    if(cur) sel.value=cur;
   }
 }
 
 function setView(v){
   viewMode=v;
-  document.getElementById('btn-uke').classList.toggle('active',v==='uke');
-  document.getElementById('btn-dag').classList.toggle('active',v==='dag');
-  buildPeriodSelector();render();
+  ['uke','dag','periode'].forEach(x=>document.getElementById('btn-'+x).classList.toggle('active',x===v));
+  buildPeriodSelector();
+  render();
 }
 
 function getFilteredData(){
   const sel=document.getElementById('sel-period').value;
-  if(!sel)return[];
-  if(viewMode==='uke')return allData.filter(r=>r.Uke===+sel);
-  const[u,d]=sel.split('|');
-  return allData.filter(r=>r.Uke===+u&&r.Dag===d);
+  if(!sel) return [];
+  if(viewMode==='uke') return allData.filter(r=>r.Uke===+sel);
+  if(viewMode==='dag'){ const[u,d]=sel.split('|'); return allData.filter(r=>r.Uke===+u&&r.Dag===d); }
+  // periode
+  const uker=getPeriodeUker();
+  return allData.filter(r=>uker.includes(r.Uke));
 }
 
 function calcKPI(rows, avdeling){
@@ -207,24 +253,32 @@ function calcKPI(rows, avdeling){
   const overtid=r.reduce((s,x)=>s+Math.max(0,x.AntallTimer-x.PlanlagtTimer),0);
   const planTotal=r.reduce((s,x)=>s+x.PlanlagtTimer,0);
   const overtidPct=planTotal>0?+(overtid/planTotal*100).toFixed(1):0;
-  const dager=viewMode==='dag'?1:[...new Set(r.map(x=>x.Dag))].length||1;
+  const uniqDager=viewMode==='dag'?1:[...new Set(r.map(x=>x.Dag+'|'+x.Uke))].length||1;
   const sykSummer=r.filter(x=>x.TotaltAnsatte>0).reduce((s,x)=>s+x.SykTotal,0);
-  const sykBasis=cfg.totaltAnsatte*dager;
+  const sykBasis=cfg.totaltAnsatte*uniqDager;
   const sykPct=sykBasis>0?+(sykSummer/sykBasis*100).toFixed(1):0;
   return{avvik,overtidPct,sykPct,rows:r};
 }
 
 function statusClass(val,warn,bad){return val>=bad?'bad':val>=warn?'warn':'ok';}
-function trend(cur,prev){if(prev==null)return'';const d=cur-prev;if(Math.abs(d)<0.1)return' →';return d>0?' ▲':' ▼';}
+function trend(cur,prev){if(prev==null||prev===undefined)return'';const d=cur-prev;if(Math.abs(d)<0.1)return' →';return d>0?' ▲':' ▼';}
 
 function render(){
   const rows=getFilteredData();
+  const sel=document.getElementById('sel-period').value;
+
+  // Update section title
+  let kpiLabel='Nøkkeltall per avdeling';
+  if(viewMode==='uke') kpiLabel=`Nøkkeltall – Uke ${sel}`;
+  else if(viewMode==='dag'){ const[u,d]=sel.split('|'); kpiLabel=`Nøkkeltall – Uke ${u}, ${d}`; }
+  else { const names={'4':'Siste 4 uker','8':'Siste 8 uker','12':'Siste 12 uker','ytd':'Hittil i år','all':'Alle uker'}; kpiLabel=`Nøkkeltall – ${names[sel]||sel}`; }
+  document.getElementById('kpi-title').textContent=kpiLabel;
+
   const grid=document.getElementById('avd-grid');
   grid.innerHTML='';
   ['Nes','Rakkestad','ORAS'].forEach(avd=>{
     const k=calcKPI(rows,avd);
-    const prevRows=getPrevPeriodData(avd);
-    const pk=prevRows?calcKPI(prevRows,avd):null;
+    const pk=getPrevKPI(avd, rows);
     const div=document.createElement('div');div.className='avd-card';
     div.innerHTML=`<div class="avd-title">${avd}</div><div class="avd-sub">${CFG[avd].kontrakt}</div>
     <div class="kpi-row">
@@ -247,33 +301,32 @@ function render(){
   renderComments(rows);
 }
 
-function getPrevPeriodData(avd){
-  const sel=document.getElementById('sel-period').value;
-  if(!sel)return null;
+function getPrevKPI(avd, currentRows){
+  // Only meaningful in uke/dag mode
+  if(viewMode==='periode') return null;
   if(viewMode==='uke'){
-    const u=+sel;
-    const prev=Math.max(...allData.filter(r=>r.Avdeling===avd&&r.Uke<u).map(r=>r.Uke)||[]);
-    if(!isFinite(prev))return null;
-    return allData.filter(r=>r.Avdeling===avd&&r.Uke===prev);
+    const sel=+document.getElementById('sel-period').value;
+    const prevU=Math.max(...allData.filter(r=>r.Avdeling===avd&&r.Uke<sel).map(r=>r.Uke).concat([-Infinity]));
+    if(!isFinite(prevU)) return null;
+    return calcKPI(allData.filter(r=>r.Avdeling===avd&&r.Uke===prevU),avd);
   }
-  const[u,d]=sel.split('|');
+  const[u,d]=document.getElementById('sel-period').value.split('|');
   const idx=DAGORDER.indexOf(d);
-  if(idx<=0)return null;
-  const prevD=DAGORDER[idx-1];
-  return allData.filter(r=>r.Avdeling===avd&&r.Uke===+u&&r.Dag===prevD);
+  if(idx<=0) return null;
+  return calcKPI(allData.filter(r=>r.Avdeling===avd&&r.Uke===+u&&r.Dag===DAGORDER[idx-1]),avd);
 }
 
 function renderChart(type){
   currentChart=type;
   document.querySelectorAll('.chart-tab').forEach((t,i)=>t.classList.toggle('active',['avvik','overtid','syk'][i]===type));
-  const uker=[...new Set(allData.map(r=>r.Uke))].sort((a,b)=>a-b).slice(-8);
+  const uker=getChartUker();
   const labels=uker.map(u=>'Uke '+u);
   const datasets=['Nes','Rakkestad','ORAS'].map((avd,i)=>{
     const colors=['#1e3a5f','#16a34a','#d97706'];
     const data=uker.map(u=>{
       const r=allData.filter(x=>x.Avdeling===avd&&x.Uke===u);
-      if(!r.length)return null;
-      if(type==='avvik')return r.reduce((s,x)=>s+x.AntallAvvik,0);
+      if(!r.length) return null;
+      if(type==='avvik') return r.reduce((s,x)=>s+x.AntallAvvik,0);
       if(type==='overtid'){
         const ot=r.reduce((s,x)=>s+Math.max(0,x.AntallTimer-x.PlanlagtTimer),0);
         const pl=r.reduce((s,x)=>s+x.PlanlagtTimer,0);
@@ -286,7 +339,7 @@ function renderChart(type){
     return{label:avd,data,borderColor:colors[i],backgroundColor:colors[i]+'22',tension:.3,fill:true,spanGaps:true,pointRadius:4};
   });
   const ctx=document.getElementById('trendChart').getContext('2d');
-  if(chartInst)chartInst.destroy();
+  if(chartInst) chartInst.destroy();
   chartInst=new Chart(ctx,{type:'line',data:{labels,datasets},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true}}}});
 }
 
@@ -298,25 +351,27 @@ function drill(avd,kpiType){
   document.getElementById('modal-title').textContent=`${avd} – ${titles[kpiType]}`;
   let html='';
   if(kpiType==='avvik'){
-    html='<table><thead><tr><th>Dag</th><th>Bil</th><th>Fraksjon</th><th>Avvik</th></tr></thead><tbody>';
-    rows.filter(r=>r.AntallAvvik>0).forEach(r=>{html+=`<tr><td>${r.Dag}</td><td>${r.Bil}</td><td>${r.Fraksjon}</td><td>${r.AntallAvvik}</td></tr>`;});
+    html='<table><thead><tr><th>Uke</th><th>Dag</th><th>Bil</th><th>Fraksjon</th><th>Avvik</th></tr></thead><tbody>';
+    rows.filter(r=>r.AntallAvvik>0).forEach(r=>{html+=`<tr><td>${r.Uke}</td><td>${r.Dag}</td><td>${r.Bil}</td><td>${r.Fraksjon}</td><td>${r.AntallAvvik}</td></tr>`;});
     html+='</tbody></table>';
-    if(!rows.filter(r=>r.AntallAvvik>0).length)html='<p style="color:var(--muted);padding:12px">Ingen glemte tømminger i valgt periode.</p>';
+    if(!rows.filter(r=>r.AntallAvvik>0).length) html='<p style="color:var(--muted);padding:12px">Ingen glemte tømminger i valgt periode.</p>';
   } else if(kpiType==='overtid'){
-    html='<table><thead><tr><th>Dag</th><th>Bil</th><th>Faktisk</th><th>Plan</th><th>Overtid</th></tr></thead><tbody>';
-    rows.forEach(r=>{const ot=Math.max(0,r.AntallTimer-r.PlanlagtTimer);if(ot>0)html+=`<tr><td>${r.Dag}</td><td>${r.Bil}</td><td>${r.AntallTimer}t</td><td>${r.PlanlagtTimer}t</td><td style="color:var(--red)">+${ot}t</td></tr>`;});
+    html='<table><thead><tr><th>Uke</th><th>Dag</th><th>Bil</th><th>Faktisk</th><th>Plan</th><th>Overtid</th></tr></thead><tbody>';
+    rows.forEach(r=>{const ot=Math.max(0,r.AntallTimer-r.PlanlagtTimer);if(ot>0)html+=`<tr><td>${r.Uke}</td><td>${r.Dag}</td><td>${r.Bil}</td><td>${r.AntallTimer}t</td><td>${r.PlanlagtTimer}t</td><td style="color:var(--red)">+${ot}t</td></tr>`;});
     html+='</tbody></table>';
-    if(!rows.filter(r=>Math.max(0,r.AntallTimer-r.PlanlagtTimer)>0).length)html='<p style="color:var(--muted);padding:12px">Ingen overtid i valgt periode.</p>';
+    if(!rows.filter(r=>Math.max(0,r.AntallTimer-r.PlanlagtTimer)>0).length) html='<p style="color:var(--muted);padding:12px">Ingen overtid i valgt periode.</p>';
   } else {
-    html='<table><thead><tr><th>Dag</th><th>Syke</th><th>Ansatte</th><th>%</th></tr></thead><tbody>';
-    const dager=DAGORDER.filter(d=>rows.some(r=>r.Dag===d));
-    dager.forEach(d=>{
-      const dr=rows.filter(r=>r.Dag===d);
+    html='<table><thead><tr><th>Uke</th><th>Dag</th><th>Syke</th><th>Ansatte</th><th>%</th></tr></thead><tbody>';
+    const uniqDagUke=[...new Set(rows.filter(r=>r.TotaltAnsatte>0).map(r=>r.Uke+'|'+r.Dag))];
+    uniqDagUke.sort().forEach(key=>{
+      const[u,d]=key.split('|');
+      const dr=rows.filter(r=>r.Dag===d&&r.Uke===+u);
       const syk=dr.filter(r=>r.TotaltAnsatte>0).reduce((s,r)=>s+r.SykTotal,0);
       const ans=CFG[avd].totaltAnsatte;
-      html+=`<tr><td>${d}</td><td>${syk}</td><td>${ans}</td><td>${+(syk/ans*100).toFixed(1)}%</td></tr>`;
+      html+=`<tr><td>${u}</td><td>${d}</td><td>${syk}</td><td>${ans}</td><td>${+(syk/ans*100).toFixed(1)}%</td></tr>`;
     });
     html+='</tbody></table>';
+    if(!uniqDagUke.length) html='<p style="color:var(--muted);padding:12px">Ingen sykefraværsdata.</p>';
   }
   document.getElementById('modal-body').innerHTML=html;
   document.getElementById('modal').classList.add('open');
