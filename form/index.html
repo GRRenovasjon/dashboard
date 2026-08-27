@@ -1,11 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="no">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>GR Renovasjon – Dagsregistrering</title>
 <style>
-:root{--blue:#1e3a5f;--bg:#f1f5f9;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--green:#16a34a;--red:#dc2626}
+:root{--blue:#1e3a5f;--bg:#f1f5f9;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--green:#16a34a;--red:#dc2626;--orange:#d97706}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 #auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -36,10 +36,14 @@ textarea{resize:none}
 .bil-header span{font-weight:400;color:var(--muted);font-size:.8rem;margin-left:6px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .meta-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.btn-save{background:var(--green);color:white;border:none;padding:15px;border-radius:12px;font-size:1.05rem;font-weight:700;cursor:pointer;width:100%}
+.btn-save{color:white;border:none;padding:15px;border-radius:12px;font-size:1.05rem;font-weight:700;cursor:pointer;width:100%}
+.btn-save.ny{background:var(--green)}
+.btn-save.oppdater{background:var(--orange)}
 .btn-save:disabled{background:#94a3b8;cursor:not-allowed}
 .success-banner{background:#dcfce7;border:1px solid #86efac;border-radius:10px;padding:14px 16px;color:#15803d;font-weight:600;font-size:.9rem;display:none}
 .error-banner{background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:14px 16px;color:#991b1b;font-size:.85rem;display:none}
+.edit-banner{background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:12px 16px;color:#92400e;font-size:.85rem;display:none;line-height:1.4}
+.loading-bar{background:#e0f2fe;border:1px solid #7dd3fc;border-radius:10px;padding:10px 16px;color:#0369a1;font-size:.83rem;display:none}
 </style>
 </head>
 <body>
@@ -60,14 +64,16 @@ textarea{resize:none}
     <p>Fyll inn dagens tall for din avdeling</p>
   </header>
   <div class="form-body">
-    <div class="success-banner" id="success">✓ Dataene er lagret!</div>
+    <div class="success-banner" id="success"></div>
     <div class="error-banner" id="error-banner"></div>
+    <div class="edit-banner" id="edit-banner"></div>
+    <div class="loading-bar" id="loading-bar">Henter eksisterende data…</div>
 
     <div class="card">
       <div class="card-title">Avdeling og dato</div>
       <div class="field">
         <label for="avdeling">Avdeling</label>
-        <select id="avdeling" onchange="renderBiler()">
+        <select id="avdeling" onchange="onAvdOrDateChange()">
           <option value="">Velg avdeling…</option>
           <option value="Nes">Nes</option>
           <option value="Rakkestad">Rakkestad</option>
@@ -75,10 +81,10 @@ textarea{resize:none}
         </select>
       </div>
       <div class="meta-row">
-        <div class="field"><label for="uke">Uke</label><input type="number" id="uke" min="1" max="53"></div>
+        <div class="field"><label for="uke">Uke</label><input type="number" id="uke" min="1" max="53" onchange="onAvdOrDateChange()"></div>
         <div class="field">
           <label for="dag">Dag</label>
-          <select id="dag">
+          <select id="dag" onchange="onAvdOrDateChange()">
             <option>Mandag</option><option>Tirsdag</option><option>Onsdag</option><option>Torsdag</option><option>Fredag</option>
           </select>
         </div>
@@ -96,7 +102,7 @@ textarea{resize:none}
       <div class="field"><label for="kommentar">Kommentar (valgfri)</label><textarea id="kommentar" rows="2" placeholder="Avvik, hendelser, forsinkelser…"></textarea></div>
     </div>
 
-    <button class="btn-save" id="save-btn" onclick="saveData()" disabled>Lagre</button>
+    <button class="btn-save ny" id="save-btn" onclick="saveData()" disabled>Lagre</button>
   </div>
 </div>
 
@@ -114,12 +120,19 @@ const CFG={
     {bil:'Bil 1',fraksjon:'Rest/mat',planlagtTimer:15},{bil:'Bil 2',fraksjon:'Rest/mat',planlagtTimer:15},
     {bil:'Bil 3',fraksjon:'Papir',planlagtTimer:15},{bil:'Bil 4',fraksjon:'Glass+',planlagtTimer:7.5}]}
 };
+
 function isoWeek(d){const t=new Date(d);t.setHours(0,0,0,0);t.setDate(t.getDate()+3-(t.getDay()+6)%7);const w=new Date(t.getFullYear(),0,4);return 1+Math.round(((t-w)/86400000-3+(w.getDay()+6)%7)/7)}
 function dayNO(d){return['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'][d.getDay()]}
+
+let currentFileSha=null; // cached SHA of entries.json
+let debounceTimer=null;
+let isEditMode=false;
+
 function checkPwd(){
   if(document.getElementById('pwd').value===PASS){sessionStorage.setItem('grr-form',PASS);showApp();}
   else document.getElementById('auth-err').textContent='Feil passord';
 }
+
 function showApp(){
   document.getElementById('auth').style.display='none';
   document.getElementById('app').style.display='block';
@@ -131,61 +144,144 @@ function showApp(){
   const av=localStorage.getItem('grr-avdeling');
   if(av){document.getElementById('avdeling').value=av;renderBiler();}
 }
-function renderBiler(){
+
+function onAvdOrDateChange(){
+  renderBiler();
+  // Debounce the data fetch so we don't fetch on every keystroke
+  clearTimeout(debounceTimer);
+  debounceTimer=setTimeout(fetchExistingData,400);
+}
+
+function renderBiler(existingRows){
   const avd=document.getElementById('avdeling').value;
-  if(!avd){document.getElementById('biler-card').style.display='none';document.getElementById('extra-card').style.display='none';document.getElementById('save-btn').disabled=true;return;}
+  if(!avd){
+    document.getElementById('biler-card').style.display='none';
+    document.getElementById('extra-card').style.display='none';
+    document.getElementById('save-btn').disabled=true;
+    return;
+  }
   localStorage.setItem('grr-avdeling',avd);
   const cfg=CFG[avd];
   let html='';
   cfg.biler.forEach((b,i)=>{
+    const ex=existingRows?existingRows.find(r=>r.Bil===b.bil):null;
+    const timerVal=ex?ex.AntallTimer:'';
+    const avvikVal=ex?ex.AntallAvvik:0;
     html+=`<div class="bil-card"><div class="bil-header">${b.bil}<span>– ${b.fraksjon} (plan: ${b.planlagtTimer}t)</span></div>
-    <div class="row2"><div><label>Timer kjørt</label><input type="number" id="timer-${i}" min="0" max="24" step="0.5" placeholder="${b.planlagtTimer}"></div>
-    <div><label>Glemte tømminger</label><input type="number" id="avvik-${i}" min="0" value="0"></div></div></div>`;
+    <div class="row2">
+      <div><label>Timer kjørt</label><input type="number" id="timer-${i}" min="0" max="24" step="0.5" placeholder="${b.planlagtTimer}" value="${timerVal}"></div>
+      <div><label>Glemte tømminger</label><input type="number" id="avvik-${i}" min="0" value="${avvikVal}"></div>
+    </div></div>`;
   });
   document.getElementById('biler-container').innerHTML=html;
   document.getElementById('biler-card').style.display='';
   document.getElementById('extra-card').style.display='';
   document.getElementById('save-btn').disabled=false;
 }
+
+async function fetchExistingData(){
+  const avd=document.getElementById('avdeling').value;
+  const uke=parseInt(document.getElementById('uke').value);
+  const dag=document.getElementById('dag').value;
+  if(!avd||!uke) return;
+
+  document.getElementById('loading-bar').style.display='';
+  hideMessages();
+
+  try{
+    const r=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}?t=${Date.now()}`,
+      {headers:{Authorization:`Bearer ${TOKEN}`,Accept:'application/vnd.github+json'}});
+    const f=await r.json();
+    currentFileSha=f.sha;
+    const all=JSON.parse(atob(f.content.replace(/\n/g,'')));
+    const existing=all.filter(x=>x.Avdeling===avd&&x.Uke===uke&&x.Dag===dag);
+
+    if(existing.length>0){
+      isEditMode=true;
+      // Pre-fill bil fields
+      renderBiler(existing);
+      // Pre-fill syk and kommentar from first row that has it
+      const sykRow=existing.find(x=>x.TotaltAnsatte>0);
+      document.getElementById('syk').value=sykRow?sykRow.SykTotal:0;
+      const komRow=existing.find(x=>x.Kommentar);
+      document.getElementById('kommentar').value=komRow?komRow.Kommentar:'';
+      // Update button
+      const btn=document.getElementById('save-btn');
+      btn.textContent='Oppdater (erstatter eksisterende data)';
+      btn.className='btn-save oppdater';
+      document.getElementById('edit-banner').style.display='';
+      document.getElementById('edit-banner').textContent=`Det finnes allerede data for ${avd}, uke ${uke}, ${dag}. Feltene er forhåndsutfylt — endre det du vil rette og trykk Oppdater.`;
+    } else {
+      isEditMode=false;
+      renderBiler();
+      const btn=document.getElementById('save-btn');
+      btn.textContent='Lagre';
+      btn.className='btn-save ny';
+      document.getElementById('edit-banner').style.display='none';
+    }
+  }catch(e){
+    // Silently ignore fetch errors in background check
+  }
+  document.getElementById('loading-bar').style.display='none';
+}
+
 async function saveData(){
   const avd=document.getElementById('avdeling').value;
   const uke=parseInt(document.getElementById('uke').value);
   const dag=document.getElementById('dag').value;
   const syk=parseInt(document.getElementById('syk').value)||0;
   const kommentar=document.getElementById('kommentar').value.trim();
-  if(!avd)return;
+  if(!avd) return;
   const cfg=CFG[avd];
-  const rows=[];
+  const newRows=[];
   cfg.biler.forEach((b,i)=>{
     const timer=parseFloat(document.getElementById('timer-'+i).value)||0;
     const avvik=parseInt(document.getElementById('avvik-'+i).value)||0;
-    if(timer===0&&avvik===0)return;
-    rows.push({Uke:uke,Dag:dag,Avdeling:avd,Kontrakt:cfg.kontrakt,Bil:b.bil,Fraksjon:b.fraksjon,
+    if(timer===0&&avvik===0) return;
+    newRows.push({Uke:uke,Dag:dag,Avdeling:avd,Kontrakt:cfg.kontrakt,Bil:b.bil,Fraksjon:b.fraksjon,
       AntallTimer:timer,PlanlagtTimer:b.planlagtTimer,AntallAvvik:avvik,
       SykTotal:i===0?syk:0,TotaltAnsatte:i===0?cfg.totaltAnsatte:0,Kommentar:kommentar});
   });
-  if(rows.length===0){showErr('Fyll inn timer for minst én bil.');return;}
+  if(newRows.length===0){showErr('Fyll inn timer for minst én bil.');return;}
+
   const btn=document.getElementById('save-btn');
-  btn.textContent='Lagrer…';btn.disabled=true;hideMsg();
+  btn.textContent='Lagrer…';btn.disabled=true;hideMessages();
+
   try{
-    const r=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`,
+    // Always fetch fresh to get latest SHA and data
+    const r=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}?t=${Date.now()}`,
       {headers:{Authorization:`Bearer ${TOKEN}`,Accept:'application/vnd.github+json'}});
     const f=await r.json();
-    let cur=[];try{cur=JSON.parse(atob(f.content.replace(/\n/g,'')));}catch(e){}
-    const updated=[...cur,...rows];
+    let all=[];
+    try{all=JSON.parse(atob(f.content.replace(/\n/g,'')));}catch(e){}
+
+    // Remove existing rows for this avd+uke+dag, then add new ones
+    const filtered=all.filter(x=>!(x.Avdeling===avd&&x.Uke===uke&&x.Dag===dag));
+    const updated=[...filtered,...newRows];
+
     const put=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`,
       {method:'PUT',headers:{Authorization:`Bearer ${TOKEN}`,'Content-Type':'application/json',Accept:'application/vnd.github+json'},
-       body:JSON.stringify({message:`Registrering uke ${uke} ${dag} - ${avd}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(updated)))),sha:f.sha})});
-    if(!put.ok)throw new Error('HTTP '+put.status);
-    document.getElementById('success').style.display='';
-    document.getElementById('kommentar').value='';
-    document.getElementById('syk').value='0';
-    cfg.biler.forEach((_,i)=>{document.getElementById('timer-'+i).value='';document.getElementById('avvik-'+i).value='0';});
+       body:JSON.stringify({message:`${isEditMode?'Oppdatert':'Registrering'} uke ${uke} ${dag} - ${avd}`,
+         content:btoa(unescape(encodeURIComponent(JSON.stringify(updated)))),sha:f.sha})});
+    if(!put.ok) throw new Error('HTTP '+put.status);
+
+    const suksess=document.getElementById('success');
+    suksess.textContent=isEditMode?`✓ Data for ${avd} uke ${uke} ${dag} er oppdatert!`:`✓ Data for ${avd} uke ${uke} ${dag} er lagret!`;
+    suksess.style.display='';
+    document.getElementById('edit-banner').style.display='none';
+    isEditMode=false;
+    btn.textContent='Lagre';
+    btn.className='btn-save ny';
   }catch(e){showErr('Kunne ikke lagre: '+e.message);}
-  btn.textContent='Lagre';btn.disabled=false;
+  btn.disabled=false;
 }
+
 function showErr(m){const e=document.getElementById('error-banner');e.textContent=m;e.style.display='';}
-function hideMsg(){document.getElementById('success').style.display='none';document.getElementById('error-banner').style.display='none';}
+function hideMessages(){
+  document.getElementById('success').style.display='none';
+  document.getElementById('error-banner').style.display='none';
+}
+
 if(sessionStorage.getItem('grr-form')===PASS)showApp();
 </script>
 </body>
