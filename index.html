@@ -356,10 +356,10 @@ function drill(avd,kpiType){
     html+='</tbody></table>';
     if(!rows.filter(r=>r.AntallAvvik>0).length) html='<p style="color:var(--muted);padding:12px">Ingen glemte tømminger i valgt periode.</p>';
   } else if(kpiType==='overtid'){
-    html='<table><thead><tr><th>Uke</th><th>Dag</th><th>Bil</th><th>Faktisk</th><th>Plan</th><th>Overtid</th></tr></thead><tbody>';
-    rows.forEach(r=>{const ot=Math.max(0,r.AntallTimer-r.PlanlagtTimer);if(ot>0)html+=`<tr><td>${r.Uke}</td><td>${r.Dag}</td><td>${r.Bil}</td><td>${r.AntallTimer}t</td><td>${r.PlanlagtTimer}t</td><td style="color:var(--red)">+${ot}t</td></tr>`;});
+    html='<table><thead><tr><th>Uke</th><th>Dag</th><th>Bil</th><th>Plan</th><th>Faktisk</th><th>Overtid</th></tr></thead><tbody>';
+    rows.sort((a,b)=>a.Uke-b.Uke||a.Dag.localeCompare(b.Dag)).forEach(r=>{const ot=Math.max(0,r.AntallTimer-r.PlanlagtTimer);const otTxt=ot>0?`<td style="color:var(--red);font-weight:700">+${ot}t</td>`:`<td style="color:var(--muted)">–</td>`;html+=`<tr><td>${r.Uke}</td><td>${r.Dag}</td><td>${r.Bil}</td><td>${r.PlanlagtTimer}t</td><td>${r.AntallTimer}t</td>${otTxt}</tr>`;});
     html+='</tbody></table>';
-    if(!rows.filter(r=>Math.max(0,r.AntallTimer-r.PlanlagtTimer)>0).length) html='<p style="color:var(--muted);padding:12px">Ingen overtid i valgt periode.</p>';
+    if(!rows.length) html='<p style="color:var(--muted);padding:12px">Ingen data i valgt periode.</p>';
   } else {
     html='<table><thead><tr><th>Uke</th><th>Dag</th><th>Syke</th><th>Ansatte</th><th>%</th></tr></thead><tbody>';
     const uniqDagUke=[...new Set(rows.filter(r=>r.TotaltAnsatte>0).map(r=>r.Uke+'|'+r.Dag))];
