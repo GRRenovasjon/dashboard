@@ -257,7 +257,17 @@ async function saveData(){
 
     // Remove existing rows for this avd+uke+dag, then add new ones
     const filtered=all.filter(x=>!(x.Avdeling===avd&&x.Uke===uke&&x.Dag===dag));
+    // Safety check: never allow removing more rows than one day can have
+    const maxRemovable=cfg.biler.length+2;
+    const removed=all.length-filtered.length;
+    if(all.length>10&&removed>maxRemovable){
+      throw new Error(`Sikkerhetssjekk: ville fjernet ${removed} rader (maks ${maxRemovable}). Ingen data ble endret. Ta kontakt med administrator.`);
+    }
     const updated=[...filtered,...newRows];
+    // Final sanity: merged result must not be smaller than before minus one day
+    if(all.length>10&&updated.length<all.length-maxRemovable){
+      throw new Error(`Sikkerhetssjekk: resultatet (${updated.length} rader) er mistenkelig lite vs. eksisterende (${all.length} rader). Avbryter.`);
+    }
 
     const put=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`,
       {method:'PUT',headers:{Authorization:`Bearer ${TOKEN}`,'Content-Type':'application/json',Accept:'application/vnd.github+json'},
